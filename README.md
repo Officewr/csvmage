@@ -57,3 +57,44 @@ Sub MergeCSVFiles()
     MsgBox "CSVファイルのマージが完了しました。"
     
 End Sub
+
+
+ここからついき
+
+Sub MergeCSVFiles()
+    
+    Dim FolderPath As Variant
+    Dim Filename As String
+    Dim Sheet As Worksheet
+    Dim LastRow As Long, LastColumn As Long, PasteRange As Range
+    
+    'フォルダを選択させる
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .AllowMultiSelect = False
+        If .Show = -1 Then
+            FolderPath = .SelectedItems(1)
+        Else
+            Exit Sub
+        End If
+    End With
+    
+    '作業シートを取得
+    Set Sheet = ThisWorkbook.Sheets("貼り付け")
+    
+    'csvファイルを順番にマージする
+    Filename = Dir(FolderPath & "\*.csv")
+    Do While Filename <> ""
+        'csvファイルを開く
+        With Workbooks.Open(Filename:=FolderPath & "\" & Filename)
+            'A列から最終列までを貼り付ける
+            LastColumn = .Worksheets(1).Cells(1, Columns.Count).End(xlToLeft).Column
+            LastRow = Sheet.Cells(Rows.Count, "A").End(xlUp).Row
+            Set PasteRange = Sheet.Range("A" & LastRow + 1)
+            .Worksheets(1).Range(.Worksheets(1).Cells(1, 1), .Worksheets(1).Cells(65536, LastColumn)).Copy PasteRange
+            .Close False
+        End With
+        Filename = Dir
+    Loop
+    
+End Sub
+
