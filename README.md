@@ -1,76 +1,13 @@
 Sub MergeCSVFiles()
+    Dim FolderPath As String
+    Dim SelectedFiles() As Variant
+    Dim CurrentFile As Variant
+    Dim TargetSheet As Worksheet
+    Dim LastColumn As Integer
     
-    Dim myPath As String
-    Dim myFile As String
-    Dim myExtension As String
-    Dim myWorkbook As Workbook
-    Dim DestWB As Workbook
-    Dim DestWS As Worksheet
-    Dim LastCol As Long
-    Dim FileCounter As Long
-    Dim i As Long
-    
-    'CSVファイルが保存されたフォルダーのパスを指定します
+    'フォルダを選択
     With Application.FileDialog(msoFileDialogFolderPicker)
-        .Title = "CSVファイルの保存されているフォルダを選択してください"
-        .Show
-        If .SelectedItems.Count = 0 Then
-            Exit Sub
-        End If
-        myPath = .SelectedItems(1) & "\"
-    End With
-    
-    'ファイルをマージするExcelファイルのシート名を指定します
-    Set DestWB = Workbooks("集計くん.xlsx")
-    Set DestWS = DestWB.Sheets("貼り付け")
-    
-    'CSVファイルの拡張子を指定します
-    myExtension = "*.csv*"
-    
-    'CSVファイルのファイル名の配列を作成します
-    Dim Files() As String
-    Files = Array("山田.csv", "田中.csv", "木村.csv", "西田.csv")
-    
-    '各ファイルの行数を格納する配列を作成します
-    Dim RowCounts() As Long
-    RowCounts = Array(130, 130, 611, 611)
-    
-    '各ファイルを順番に取り込みます
-    For i = 0 To UBound(Files)
-        myFile = myPath & Files(i)
-        Set myWorkbook = Workbooks.Open(myFile)
-        If myWorkbook.Sheets(1).UsedRange.Rows.Count <> RowCounts(i) Then
-            myWorkbook.Sheets(1).Cells(1, 1).Interior.Color = vbRed '指定行数と異なる場合、1番上のセルに赤色を付ける
-        End If
-        LastCol = DestWS.Cells(1, DestWS.Columns.Count).End(xlToLeft).Column
-        For j = 1 To 3 '列数を3に変更
-            FileCounter = FileCounter + 1
-            myWorkbook.Sheets(1).Cells(1, j).Copy
-            DestWS.Cells(1, LastCol + FileCounter).PasteSpecial xlPasteValues
-        Next j
-        myWorkbook.Close
-    Next i
-    
-    'アプリケーションのコピー＆ペーストバッファをクリアします
-    Application.CutCopyMode = False
-    
-    MsgBox "CSVファイルのマージが完了しました。"
-    
-End Sub
-
-
-ここからついき
-
-Sub MergeCSVFiles()
-    
-    Dim FolderPath As Variant
-    Dim Filename As String
-    Dim Sheet As Worksheet
-    Dim LastRow As Long, LastColumn As Long, PasteRange As Range
-    
-    'フォルダを選択させる
-    With Application.FileDialog(msoFileDialogFolderPicker)
-        .AllowMultiSelect = False
+        .Title = "CSVファイルが格納されているフォルダを選択してください"
         If .Show = -1 Then
             FolderPath = .SelectedItems(1)
         Else
@@ -78,23 +15,26 @@ Sub MergeCSVFiles()
         End If
     End With
     
-    '作業シートを取得
-    Set Sheet = ThisWorkbook.Sheets("貼り付け")
+    'マージするファイル名を設定
+    SelectedFiles = Array("たなか.csv", " sso_d 01 .csv", "たかし.csv", "td33333333333333333o.csv")
     
-    'csvファイルを順番にマージする
-    Filename = Dir(FolderPath & "\*.csv")
-    Do While Filename <> ""
-        'csvファイルを開く
-        With Workbooks.Open(Filename:=FolderPath & "\" & Filename)
-            'A列から最終列までを貼り付ける
-            LastColumn = .Worksheets(1).Cells(1, Columns.Count).End(xlToLeft).Column
-            LastRow = Sheet.Cells(Rows.Count, "A").End(xlUp).Row
-            Set PasteRange = Sheet.Range("A" & LastRow + 1)
-            .Worksheets(1).Range(.Worksheets(1).Cells(1, 1), .Worksheets(1).Cells(65536, LastColumn)).Copy PasteRange
-            .Close False
-        End With
-        Filename = Dir
-    Loop
+    '貼り付け先のシートを設定
+    Set TargetSheet = ThisWorkbook.Sheets("貼り付け")
     
+    '各ファイルを順にマージ
+    For Each CurrentFile In SelectedFiles
+        'ファイルが存在するか確認
+        If Dir(FolderPath & "\" & CurrentFile) <> "" Then
+            'CSVファイルを開く
+            With Workbooks.Open(FolderPath & "\" & CurrentFile)
+                'A列からC列をコピーし、新しい列に貼り付け
+                LastColumn = TargetSheet.Cells(1, Columns.Count).End(xlToLeft).Column
+                .Sheets(1).Range("A:C").Copy Destination:=TargetSheet.Cells(1, LastColumn + 1)
+                .Close False
+            End With
+        End If
+    Next CurrentFile
+    
+    '結果を表示
+    MsgBox "CSVファイルのマージが完了しました。", vbInformation
 End Sub
-
